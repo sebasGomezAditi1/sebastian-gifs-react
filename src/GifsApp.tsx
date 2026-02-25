@@ -1,17 +1,54 @@
-import { CustomHeader } from './shared/components/CustomHeader'
-import { GifsSearch } from './shared/components/GifsSearch'
-import { PreviousSearches } from './gifs/components/PreviousSearches'
-import { GifContainer } from './gifs/components/GifContainer'
-import { useGifs } from './gifs/hooks/useGifs'
+import { useState } from 'react';
+
+import { GifList } from './gifs/components/GifList';
+import { PreviousSearches } from './gifs/components/PreviousSearches';
+
+import { CustomHeader } from './shared/components/CustomHeader';
+import { SearchBar } from './shared/components/SearchBar';
+
+import { getGifsByQuery } from './gifs/actions/get-gifs-by-query.action';
+import type { Gif } from './gifs/interfaces/gif.interface';
 
 export const GifsApp = () => {
-  const { previousTerms, gifs, handleTermClick, handleSearch } = useGifs();
+  const [gifs, setGifs] = useState<Gif[]>([]);
+  const [previousTerms, setPreviousTerms] = useState<string[]>([]);
+
+  const handleTermClicked = (term: string) => {
+    console.log({ term });
+  };
+
+  const handleSearch = async (query: string = '') => {
+    query = query.trim().toLowerCase();
+
+    if (query.length === 0) return;
+
+    if (previousTerms.includes(query)) return;
+
+    setPreviousTerms([query, ...previousTerms].splice(0, 8));
+
+    const gifs = await getGifsByQuery(query);
+    setGifs(gifs);
+  };
+
   return (
     <>
-        <CustomHeader title='Mis Gifs' description='Aplicacion de gifs para practicar React' />
-        <GifsSearch placeholder='Buscar Gifs' onQuery={handleSearch} />
-        <PreviousSearches searches={previousTerms} onSearchResultClick={handleTermClick} />
-        <GifContainer gifs={gifs} />
+      {/* Header */}
+      <CustomHeader
+        title="Buscador de Gifs"
+        description="Descubre y comparte el Gif perfecto"
+      />
+
+      {/* Search */}
+      <SearchBar placeholder="Busca lo que quieras" onQuery={handleSearch} />
+
+      {/* Búsquedas previas */}
+      <PreviousSearches
+        searches={previousTerms}
+        onLabelClicked={handleTermClicked}
+      />
+
+      {/* Gifs */}
+      <GifList gifs={gifs} />
     </>
-  )
-}
+  );
+};
